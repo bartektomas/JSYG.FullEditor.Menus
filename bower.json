@@ -1,8 +1,8 @@
 {
-    "name": "jsyg-fulleditor-toolbar",
+    "name": "jsyg-fulleditor-menus",
     "authors" : ["Yannick Bochatay"],
-    "description" : "Toolbar plugin for JSYG.FullEditor",
-    "main": ["JSYG.FullEditor.Toolbar.js"],
+    "description" : "Menus plugin for JSYG.FullEditor",
+    "main": ["JSYG.FullEditor.Menus.js"],
     "moduleType": [
         "amd",
         "globals"
@@ -11,16 +11,17 @@
         "jsyg":"latest",
         "jsyg-fulleditor":"latest",
         "jquery-fullscreen":"latest",
-        "jsyg-menubar":"latest",
+        "jsyg-menu":"latest",
         "led-icons":"latest"
     },
     "devDependencies": {
         "bootstrap":"latest",
+        "jsyg-menubar":"latest",
         "jsyg-contextmenu":"latest"
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com/YannickBochatay/JSYG.FullEditor.Toolbar.git"
+        "url": "git://github.com/YannickBochatay/JSYG.FullEditor.Menus.git"
     },
     "license": "MIT",
     "ignore": ["**/.*","tests","bower_components","nbproject"],

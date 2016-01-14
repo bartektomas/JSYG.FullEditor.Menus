@@ -90,6 +90,7 @@ $(function() {
         "hide.bs.collapse":function() {
             svgEditor.disableShapeDrawer();
             svgEditor.disableInsertElement();
+            svgEditor.enableSelection();
         }
     });
     
@@ -166,6 +167,8 @@ $(function() {
     
     svgEditor.newDocument(500,500);
     
-    svgEditor.enableDropImages();
+    //svgEditor.importSVGAs = "svg";
+    
+    svgEditor.enableDropFiles();
     
 });
