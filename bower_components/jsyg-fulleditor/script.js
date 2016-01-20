@@ -36,6 +36,21 @@ $(function() {
         svgEditor.chooseFile().then(svgEditor.loadFile).catch(alert);
     });
     
+    $("#insertImage").on("click",function() {
+        
+        svgEditor.chooseFile().then(svgEditor.insertImageFile).catch(alert);
+    });
+    
+    $("#downloadSVG").on("click",function() {
+        
+        svgEditor.download("svg");
+    });
+    
+     $("#downloadPNG").on("click",function() {
+        
+        svgEditor.download("png");
+    });
+    
     $('#openExample').on("click",function() {
         $('#exampleChoice').modal();
     });
@@ -117,6 +132,10 @@ $(function() {
         svgEditor.zoomTo('canvas');
     });
     
+    $('#fitToDoc').on("click",function() {
+       svgEditor.fitToDoc();
+    });
+    
     $('#realSize').on("click",function() {
         svgEditor.zoomTo(100);
     });
@@ -143,16 +162,7 @@ $(function() {
             new JSYG(this).blur();
         }).trigger("change");
     });
-    
-    ["toSVGDataURL","toPNGDataURL"].forEach(function(action) {
         
-        $("#"+action).on("click",function() {
-            svgEditor[action]().then(function(url) {
-                window.open(url);
-            });
-        });
-    });
-    
     $('#print').on("click",function() { svgEditor.print(); });
     
     svgEditor.registerKeyShortCut({
@@ -167,8 +177,7 @@ $(function() {
     
     svgEditor.newDocument(500,500);
     
-    //svgEditor.importSVGAs = "svg";
-    
     svgEditor.enableDropFiles();
     
+    svgEditor.enableMouseWheelZoom();
 });

@@ -40,20 +40,16 @@
     
     FullEditor.prototype.constructor = FullEditor;
     
-    FullEditor.prototype.onload = null;
-    
-    FullEditor.prototype.ondrag = null;
-    
-    FullEditor.prototype.onchange = null;
-    
     //events
     [
         'onload',
         'ondrag',
+        'ondraw',
+        'oninsert',
+        'onremove',
         'onchange',
         'onzoom',
-        'oninsert',
-        'onremove'
+        'onchangetarget'
         
     ].forEach(function(event) { FullEditor.prototype[event] = null; });
     
@@ -506,16 +502,20 @@
         
         var that = this;
         
-        
-        drawer.on("end",function(e) {
+        drawer.on({
             
-            if (!this.parentNode) return;
+            draw : function(e) { that.trigger("draw",that,e,this); },
             
-            var $this = $(this);
-            
-            that.triggerChange();
-            
-            if (that.autoEnableSelection) that.shapeEditor.target(this).show();
+            end : function(e) {
+                
+                if (!this.parentNode) return;
+                
+                that.trigger("insert",that,e,this);
+                
+                that.triggerChange();
+                
+                if (that.autoEnableSelection) that.shapeEditor.target(this).show();
+            }
         });
         
         return drawer;
@@ -532,10 +532,10 @@
     };
     
     
-    Object.defineProperty(FullEditor.prototype,"drawingShapeModel",{
+    Object.defineProperty(FullEditor.prototype,"shapeDrawerModel",{
         
         get:function() {
-            return this._drawingShapeModel;
+            return this._shapeDrawerModel;
         },
         
         set:function(value) {
@@ -547,18 +547,19 @@
             if (JSYG.svgShapes.indexOf(jNode.getTag()) == -1)
                 throw new Error(jNode.getTag()+" is not a svg shape");
             
-            this._drawingShapeModel = jNode[0];
+            this._shapeDrawerModel = jNode[0];
         }
     });
     
+        
     FullEditor.prototype.enableShapeDrawer = function(modele) {
         
         var frame = new JSYG(this.zoomAndPan.innerFrame),
         that = this;
-    
+        
         this.disableEdition();
         
-        if (modele) this.drawingShapeModel = modele;
+        if (modele) this.shapeDrawerModel = modele;
         
         function onmousedown(e) {
             
@@ -566,7 +567,7 @@
             
             e.preventDefault();
             
-            var modele = that.drawingShapeModel;
+            var modele = that.shapeDrawerModel;
             if (!modele) throw new Error("You must define a model");
             
             var shape = new JSYG(modele).clone().appendTo( that.currentLayer );
@@ -731,6 +732,18 @@
         return this;
     };
     
+    FullEditor.prototype.fitToDoc = function() {
+        
+        var dim = new JSYG(this.getDocument()).getDim("screen"),
+        overflow = this.zoomAndPan.overflow;
+        
+        this.zoomAndPan.size({
+            width : dim.width + (overflow!="hidden" ? 10 : 0),
+            height : dim.height + (overflow!="hidden" ? 10 : 0)
+        });
+        
+        return this;
+    };
     
     
     FullEditor.prototype._initZoomAndPan = function() {
@@ -788,6 +801,10 @@
             
             drag : function(e) {
                 that.trigger("drag", that, e, editor._target);
+            },
+            
+            changetarget : function() {
+                that.trigger("changetarget",that,editor._target);
             }
         });
         
@@ -847,6 +864,7 @@
         set:function(value) { this.shapeEditor.list = this._getDocumentSelector() + value; }
     });
     
+    
     FullEditor.prototype.enableMousePan = function(opt) {
         
         if (!this.zoomAndPan.mousePan.enabled) {
@@ -854,8 +872,6 @@
             this.disableEdition();
             
             this.zoomAndPan.mousePan.enable(opt);
-            
-            //this.trigger("enablemousepan",this,this.getDocument());
         }
         
         return this;
@@ -866,6 +882,26 @@
         if (this.zoomAndPan.mousePan.enabled) {
             
             this.zoomAndPan.mousePan.disable();
+        }
+        
+        return this;
+    };
+    
+    FullEditor.prototype.enableMouseWheelZoom = function(opt) {
+        
+        if (!this.zoomAndPan.mouseWheelZoom.enabled) {
+            
+            this.zoomAndPan.mouseWheelZoom.enable(opt);
+        }
+        
+        return this;
+    };
+    
+    FullEditor.prototype.disableMouseWheelZoom = function() {
+        
+        if (this.zoomAndPan.mouseWheelZoom.enabled) {
+            
+            this.zoomAndPan.mouseWheelZoom.disable();
         }
         
         return this;
@@ -916,9 +952,7 @@
     
     FullEditor.prototype.isGroup = function() {
         
-        var target = this.shapeEditor.target();
-        
-        return target.length == 1 && target.getTag() == "g";
+        return this.shapeEditor.isGroup();
     };
     
     Object.defineProperty(FullEditor.prototype,'overflow',{
@@ -951,9 +985,7 @@
         this.zoomAndPan.enable();
         
         this._insertFrame();
-        
-        this.zoomAndPan.mouseWheelZoom.enable();
-        
+                
         //on force les valeurs pour exécuter les fonctions définies dans Object.defineProperty
         if (this._editPathCtrlPoints) this._editPathCtrlPoints = true;
         if (this._resizable) this._resizable = true;
@@ -961,8 +993,6 @@
         this.shapeEditor.enableCtrls('drag','resize','rotate','mainPoints');
         
         this.shapeEditor.enable();
-        
-        this.textEditor.enable();
         
         this.enableKeyShortCuts();
         
@@ -1139,10 +1169,11 @@
         
         if (textNode) new JSYG(textNode).remove();
         
-        
-        this.trigger("insert", this, this.getDocument(), elmt );
-        
-        if (!_preventEvent) this.triggerChange();
+        if (!_preventEvent) {
+            
+            this.trigger("insert", this, this.getDocument(), elmt );
+            this.triggerChange();
+        }
         
         return this;
     };
@@ -1172,7 +1203,7 @@
                 if (!dt || !dt.files || !dt.files.length) return;
                 
                 var file = dt.files[0];
-                                
+                
                 if (/svg/i.test(file.type) && that.importSVGAs.toLowerCase() == "svg") that.insertSVGFile(file,e);
                 else that.insertImageFile(file,e);
             }
@@ -1209,8 +1240,8 @@
             .then(JSYG.parseSVG)
             .then(function(svg) {
                 that.insertElement(svg,e);
-                that.shapeEditor.target(svg).show();
-            });
+            that.shapeEditor.target(svg).show();
+        });
     };
     
     FullEditor.prototype.importImage = function(arg) {
@@ -1373,11 +1404,55 @@
         });
     };
     
+    FullEditor.prototype._checkExportFormat = function(format) {
+        
+        var exportFormats = ['svg','png'];
+      
+        if (exportFormats.indexOf(format) == -1) throw new Error(format+" : incorrect format ("+exportFormats.join(' or ')+" required)");
+    };
+    
+    FullEditor.prototype.toDataURL = function(format) {
+        
+        if (!format) format = 'svg';
+        
+        this._checkExportFormat(format);
+        
+        var method = "to"+format.toUpperCase()+"DataURL";
+        
+        return this[method]();
+    };
+    
     FullEditor.prototype.print = function() {
         
         return this.toSVGDataURL().then(function(url) {
             var win = window.open(url);
             win.onload = function() { win.print(); };
+        });
+    };
+    
+    FullEditor.prototype.downloadPNG = function() {
+      
+        return this.download("png");
+    };
+    
+    FullEditor.prototype.downloadSVG = function() {
+      
+        return this.download("svg");
+    };
+    
+    FullEditor.prototype.download = function(format) {
+        
+        if (!format) format = 'svg';
+        
+        return this.toDataURL(format).then(function(url) {
+            
+            var a = new JSYG('<a>').attr({
+                href:url,
+                download:"file."+format
+            }).appendTo('body');
+            
+            a[0].click();
+            a.remove();
         });
     };
     
