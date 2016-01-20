@@ -4,35 +4,88 @@ $(function() {
     
     window.svgEditor = new JSYG.FullEditor(mainContainer);
     
-    //svgEditor.lang = "fr";
-    
-    var globalContextMenu = new JSYG.ContextMenu(mainContainer);
-                    
-    var fileMenu = svgEditor.createMenu({
-        items:["newDoc","openDoc","print","exportSVG","exportPNG"],
-        lang:"fr",
-        colors:true
-    })
-    .set({title:"File"});
-    
-    var editMenu = svgEditor.createMenu("undo","redo","divider","copy","cut","paste","duplicate","remove","divider","selectAll","deselectAll","group","ungroup").set({title:"Edit"});
-    
-    var viewMenu = svgEditor.createMenu("zoomIn","zoomOut","fitToCanvas","realSize","marqueeZoom","mousePan","fullScreen","magnifyingGlass").set({title:"View"});
-            
-    var positionMenu = svgEditor.createMenu("moveBack","moveBackwards","moveForwards","moveFront","divider","alignTop","alignMiddle","alignBottom","divider","alignLeft","alignCenter","alignRight","divider","centerVerti","centerHoriz").set({title:"Position"});
+    (function initContextMenu() {
         
-    var optionsMenu = svgEditor.createMenu("editPosition","editSize","editRotation","editPathMainPoints","editPathCtrlPoints","autoSmoothPaths","useTransformAttr","keepShapesRatio","editText","canvasResizable").set({title:"Options"});
-    
-    var toolsMenu = svgEditor.createMenu("selectionTool","insertText","insertImageFile","drawRect","drawPath","drawFreeHandPath").set({"title":"Tools"});
-    
-    var contextMenu = svgEditor.createMenu({
-        items:["moveBack","moveBackwards","moveForwards","moveFront"],
-        type: "contextMenu"
-    });
-    contextMenu.setNode(svgEditor.shapeEditor.container);
-    contextMenu.enable();
+        var contextMenu = svgEditor.createMenu({
+            items:["copy","cut","remove","duplicate","divider","editPathCtrlPoints"],
+            type:"contextMenu"
+        });
         
-    new JSYG("#menuBar").menuBar([fileMenu,editMenu,toolsMenu,positionMenu,viewMenu,optionsMenu]);
+        contextMenu.addItem({
+            text:"Position",
+            icon:"ledicon bnw shape_move_backwards",
+            submenu:svgEditor.createMenu("moveBack","moveBackwards","moveForwards","moveFront","divider","centerVerti","centerHoriz")
+        });
+        
+        contextMenu.setNode(svgEditor.shapeEditor.container);
+        contextMenu.enable();
+        
+        svgEditor.shapeEditor.on("changetarget",function(target) {
+            contextMenu.getItem("editPathCtrlPoints").disabled = new JSYG(target).getTag() != "path";
+        });
+        
+    }());
+    
+    (function initGlobalContextMenu() {
+        
+        var globalContextMenu = svgEditor.createMenu({
+            items:["paste","undo","redo","divider","selectionTool"],
+            type:"contextMenu"
+        });
+        
+        globalContextMenu.addItem({
+            text:"Draw",
+            icon:"ledicon bnw pencil",
+            submenu:svgEditor.createMenu("drawRect","drawCircle","drawEllipse","drawLine","drawPolyline","drawPolygon","drawPath","drawFreeHandPath")
+        });
+        
+        globalContextMenu.setNode(svgEditor.zoomAndPan.outerFrame);
+        globalContextMenu.enable();
+        
+    })();
+    
+    (function initMenuBar() {
+        
+        $('#confirmExample').on("click",function() {
+            svgEditor.loadURL("examples/"+$('#examples').val()+".svg");
+            $('#exampleChoice').modal("hide");
+        });
+        
+        $('#confirmDim').on("click",function() {
+            svgEditor.newDocument( $('#width').val(), $('#height').val() );
+            $('#dimChoice').modal("hide");
+        });
+        
+        var fileMenu = svgEditor.createMenu("openFile","print","downloadSVG","downloadPNG").set({title:"File"});
+        
+        fileMenu.addItem({
+            text:"New Document",
+            icon:"ledicon bnw page_white_add",
+            action:function() { $('#dimChoice').modal(); }
+        },0);
+        
+        fileMenu.addItem({
+            text:"Open example",
+            icon:"ledicon bnw image",
+            action:function() { $('#exampleChoice').modal(); }
+        },1);
+        
+        
+        var editMenu = svgEditor.createMenu("undo","redo","divider","copy","cut","paste","duplicate","remove","divider","selectAll","deselectAll","group","ungroup").set({title:"Edit"});
+        
+        var viewMenu = svgEditor.createMenu("zoomIn","zoomOut","fitToCanvas","fitToDoc","realSize","marqueeZoom","mousePan","fullScreen","magnifyingGlass").set({title:"View"});
+        
+        var positionMenu = svgEditor.createMenu("moveBack","moveBackwards","moveForwards","moveFront","divider","alignTop","alignMiddle","alignBottom","divider","alignLeft","alignCenter","alignRight","divider","centerVerti","centerHoriz").set({title:"Position"});
+        
+        var optionsMenu = svgEditor.createMenu("editPosition","editSize","editRotation","editPathMainPoints","editPathCtrlPoints","autoSmoothPaths","useTransformAttr","keepShapesRatio","editText","canvasResizable").set({title:"Options"});
+        
+        var toolsMenu = svgEditor.createMenu("selectionTool","insertText","insertImageFile","drawRect","drawLine","drawPolyline","drawPolygon","drawPath","drawFreeHandPath").set({"title":"Tools"});
+        
+        new JSYG("#menuBar").menuBar([fileMenu,editMenu,toolsMenu,positionMenu,viewMenu,optionsMenu]);
+        
+    }());
+    
+    
     
     svgEditor.editableShapes = "> *";
     
@@ -42,11 +95,9 @@ $(function() {
     
     svgEditor.newDocument(500,500);
     
-    svgEditor.drawingShapeModel = new JSYG("<path>").addClass("perso");
+    svgEditor.shapeDrawerModel = new JSYG("<path>").addClass("perso");
     
     svgEditor.enableDropFiles();
-        
     
-    globalContextMenu.enable();
-    
+    svgEditor.enableMouseWheelZoom();
 });
