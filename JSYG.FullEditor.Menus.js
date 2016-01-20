@@ -19,6 +19,8 @@
     
     JSYG('<rect>').attr({fill:"none",stroke:"none",width:"16",height:"16"}).appendTo(svg);
     
+    var globalShortcuts = [];
+    
     var shapeIcons = {
         
         rect : svg.clone().append( new JSYG('<rect>').attr({height:10,width:14,x:1,y:3,fill:'none',stroke:'black'}) ),
@@ -26,6 +28,8 @@
         circle : svg.clone().append( new JSYG('<circle>').attr({r:7,cy:8,cx:8,fill:'none',stroke:'black'}) ),
         
         ellipse : svg.clone().append( new JSYG('<ellipse>').attr({rx:5,ry:7,cy:8,cx:8,fill:'none',stroke:'black'}) ),
+        
+        line : svg.clone().append( new JSYG('<line>').attr({x1:0,y1:0,x2:16,y2:16,fill:'none',stroke:'black'}) ),
         
         polyline : svg.clone().append( new JSYG('<polyline>').attr({points:"0,0 5,15 10,5 16,16",fill:'none',stroke:'black'}) ),
         
@@ -58,7 +62,7 @@
     function enableShapeDrawer(editor,tag) {
         
         if (new JSYG(editor.insertElementModel).getTag() != tag) {
-            editor.drawingShapeModel = createNewElement(tag,editor.drawingShapeModel);
+            editor.shapeDrawerModel = createNewElement(tag,editor.shapeDrawerModel);
         }
         editor.enableShapeDrawer();
     }
@@ -69,14 +73,29 @@
             text: {en:"New document",fr:"Nouveau document"},
             icon:"ledicon bnw page_white_add",
             action:function() {
-                this.newDocument(500,800);
+                var dim = JSYG(this.getDocument()).getDim();
+                this.newDocument(dim.width || 500, dim.height || 800);
             }
         },
-        openDoc : {
-            text:{en:"Open document",fr:"Ouvrir un document"},
+        openFile : {
+            text:{en:"Open file",fr:"Ouvrir un fichier"},
             icon:"ledicon bnw page_white_edit",
             action:function() {
                 this.chooseFile().then(this.loadFile);
+            }
+        },
+        downloadSVG : {
+            text:{en:"Download SVG",fr:"Télécharger le SVG"},
+            icon:"ledicon bnw page_white_go",
+            action:function() {
+                this.download("svg");
+            }
+        },
+        downloadPNG : {
+            text:{en:"Download PNG",fr:"Télécharger le PNG"},
+            icon:"ledicon bnw page_white_go",
+            action:function() {
+                this.download("png");
             }
         },
         exportSVG : {
@@ -201,9 +220,14 @@
                 this.zoomTo("canvas");
             }
         },
+        fitToDoc :{
+            text:{en:"Fit to doc",fr:"Adapter au document"},
+            icon:"ledicon bnw  doc_resize_actual",
+            action : function() { this.fitToDoc(); }
+        },
         realSize:{
             text:{en:"Real size",fr:"Taille réelle"},
-            icon:"ledicon bnw doc_resize_actual",
+            icon:"ledicon bnw arrow_out",
             action:function() {
                 this.zoomTo(100);
             }
@@ -374,8 +398,6 @@
             disabled : true,
             action : function() {
                 this.centerVertically();
-                menu.getItem("centerVerti").disabled = true;
-                menu.update();
             }
         },
         
@@ -385,8 +407,6 @@
             disabled : true,
             action : function() {
                 this.centerHorizontally();
-                menu.getItem("centerHoriz").disabled = true;
-                menu.update();
             }
         },
         
@@ -512,6 +532,14 @@
             icon:shapeIcons.ellipse,
             action:function() {
                 enableShapeDrawer(this,"ellipse");
+            }
+        },
+        
+        drawLine : {
+            text:{en:"Draw line",fr:"Dessiner des lignes"},
+            icon:shapeIcons.line,
+            action:function() {
+                enableShapeDrawer(this,"line");
             }
         },
         
@@ -658,6 +686,11 @@
     
     FullEditor.prototype.lang = "en";
     
+    FullEditor.prototype.getMenuListItems = function() {
+        
+        return Object.keys(items);
+    }
+    
     FullEditor.prototype.createMenu = function(opt) {
         
         if (!JSYG.isPlainObject(opt) && !Array.isArray(opt)) opt = {};
@@ -742,9 +775,16 @@
             
             if (name == "divider") return menu.addDivider();
             
+            if (!items[name]) throw new Error("item "+name+" does not exist");
+            
             var item = JSYG.extend({},items[name]);
             
-            if (!item) throw new Error("item "+name+" does not exist");
+            if (item.globalShortcut) {
+                if (globalShortcuts.indexOf(item.globalShortcut) != -1) item.globalShortcut = null;
+                else globalShortcuts.push(item.globalShortcut);
+            }
+            
+            if (typeof item.icon == "object") item.icon = new JSYG(item.icon).clone();
             
             item.name = name;
             item.text = item.text[ opt.lang || that.lang ];
