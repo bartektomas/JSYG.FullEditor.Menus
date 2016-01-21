@@ -235,7 +235,7 @@
         marqueeZoom : {
             text:{en:"Marquee zoom",fr:"Zoom dynamique"},
             icon: "ledicon bnw zone",
-            action:function() { this.enableMarqueeZoom(); }
+            action:function() { this.marqueeZoom(); }
         },
         mousePan : {
             text:{en:"Mouse pan",fr:"Panoramique"},
@@ -686,10 +686,9 @@
     
     FullEditor.prototype.lang = "en";
     
-    FullEditor.prototype.getMenuListItems = function() {
-        
-        return Object.keys(items);
-    }
+    
+    FullEditor.prototype.menuItems = items;
+    
     
     FullEditor.prototype.createMenu = function(opt) {
         
