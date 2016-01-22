@@ -687,7 +687,7 @@
     FullEditor.prototype.lang = "en";
     
     
-    FullEditor.prototype.menuItems = items;
+    FullEditor.menuItems = items;
     
     
     FullEditor.prototype.createMenu = function(opt) {
