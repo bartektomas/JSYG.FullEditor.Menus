@@ -245,14 +245,6 @@
                 if (!val) this.enableSelection();
             }
         },
-        magnifyingGlass : {
-            text:{en:"Magnifying glass",fr:"Loupe"},
-            checkbox:true,
-            action:function(e,val) {
-                this[ (val?"en":"dis")+"ableMagnifyingGlass"]();
-                if (!val) this.enableSelection();
-            }
-        },
         fullScreen : {
             text:{en:"Full screen",fr:"Plein écran"},
             checkbox:true,

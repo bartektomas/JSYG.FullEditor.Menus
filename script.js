@@ -73,7 +73,7 @@ $(function() {
         
         var editMenu = svgEditor.createMenu("undo","redo","divider","copy","cut","paste","duplicate","remove","divider","selectAll","deselectAll","group","ungroup").set({title:"Edit"});
         
-        var viewMenu = svgEditor.createMenu("zoomIn","zoomOut","fitToCanvas","fitToDoc","realSize","marqueeZoom","mousePan","fullScreen","magnifyingGlass").set({title:"View"});
+        var viewMenu = svgEditor.createMenu("zoomIn","zoomOut","fitToCanvas","fitToDoc","realSize","marqueeZoom","mousePan","fullScreen").set({title:"View"});
         
         var positionMenu = svgEditor.createMenu("moveBack","moveBackwards","moveForwards","moveFront","divider","alignTop","alignMiddle","alignBottom","divider","alignLeft","alignCenter","alignRight","divider","centerVerti","centerHoriz").set({title:"Position"});
         
